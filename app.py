@@ -1,9 +1,9 @@
 import streamlit as st
 import pickle
 import os
-import numpy as np
+import warnings
 
-# ── Page config ──────────────────────────────────────────────────────────────
+# ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="Car Price Predictor",
     page_icon="🚗",
@@ -17,11 +17,6 @@ st.markdown("""
 
 html, body, [class*="css"] {
     font-family: 'Inter', sans-serif;
-}
-
-.main {
-    background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
-    min-height: 100vh;
 }
 
 .block-container {
@@ -45,7 +40,7 @@ html, body, [class*="css"] {
     text-align: center;
     color: #8e9ab5;
     font-size: 1rem;
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
 }
 
 .card {
@@ -127,14 +122,6 @@ label, .stSelectbox label, .stNumberInput label {
     font-size: 0.9rem !important;
 }
 
-.stNumberInput input, .stTextInput input {
-    border-radius: 10px !important;
-}
-
-.stSelectbox > div > div {
-    border-radius: 10px !important;
-}
-
 footer {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
@@ -166,19 +153,50 @@ def format_price(value):
 
 # ── UI ────────────────────────────────────────────────────────────────────────
 st.markdown('<div class="hero-title">🚗 Car Price Predictor</div>', unsafe_allow_html=True)
-st.markdown('<div class="hero-sub">Enter car details below to get an instant AI-powered price estimate</div>', unsafe_allow_html=True)
+st.markdown('<div class="hero-sub">New Car ya Used Car — dono ki instant AI price estimate</div>', unsafe_allow_html=True)
+
+# ── New vs Used Car Toggle ────────────────────────────────────────────────────
+car_condition = st.radio(
+    "**Car Condition**",
+    options=["🆕  New Car", "🔄  Used / Second Hand Car"],
+    horizontal=True,
+)
+is_new_car = car_condition == "🆕  New Car"
+st.divider()
 
 # ── Card 1: Basic Info ────────────────────────────────────────────────────────
 st.markdown('<div class="card"><div class="card-title">📋 Basic Information</div>', unsafe_allow_html=True)
+
 col1, col2 = st.columns(2)
 with col1:
-    car_name    = st.text_input("Car Name", placeholder="e.g. Maruti Swift")
-    km_driven   = st.number_input("KM Driven", min_value=0, max_value=1_000_000, value=30000, step=1000)
-    engine_cc   = st.number_input("Engine (CC)", min_value=500, max_value=6000, value=1200, step=100)
+    car_name  = st.text_input("Car Name", placeholder="e.g. Maruti Swift")
+
+    if is_new_car:
+        # New car: KM Driven is always 0
+        st.number_input("KM Driven", value=0, disabled=True,
+                        help="New car ke liye KM Driven = 0")
+        km_driven = 0
+    else:
+        km_driven = st.number_input("KM Driven", min_value=0, max_value=1_000_000,
+                                    value=30000, step=1000)
+
+    engine_cc = st.number_input("Engine (CC)", min_value=500, max_value=6000,
+                                value=1200, step=100)
+
 with col2:
-    vehicle_age = st.number_input("Vehicle Age (years)", min_value=0, max_value=30, value=3, step=1)
-    mileage     = st.number_input("Mileage (kmpl)", min_value=0.0, max_value=100.0, value=18.0, step=0.5)
-    max_power   = st.number_input("Max Power (bhp)", min_value=0.0, max_value=1000.0, value=85.0, step=1.0)
+    if is_new_car:
+        # New car: age is always 0
+        st.number_input("Vehicle Age (years)", value=0, disabled=True,
+                        help="New car ke liye Age = 0")
+        vehicle_age = 0
+    else:
+        vehicle_age = st.number_input("Vehicle Age (years)", min_value=0,
+                                      max_value=30, value=3, step=1)
+
+    mileage   = st.number_input("Mileage (kmpl)", min_value=0.0, max_value=100.0,
+                                value=18.0, step=0.5)
+    max_power = st.number_input("Max Power (bhp)", min_value=0.0, max_value=1000.0,
+                                value=85.0, step=1.0)
 
 seats = st.select_slider("Number of Seats", options=[2, 4, 5, 6, 7], value=5)
 st.markdown('</div>', unsafe_allow_html=True)
@@ -186,20 +204,34 @@ st.markdown('</div>', unsafe_allow_html=True)
 # ── Card 2: Car Type ─────────────────────────────────────────────────────────
 st.markdown('<div class="card"><div class="card-title">⚙️ Car Type</div>', unsafe_allow_html=True)
 col1, col2, col3 = st.columns(3)
+
 with col1:
-    seller_type = st.selectbox("Seller Type", ["Dealer", "Individual", "Trustmark Dealer"])
+    if is_new_car:
+        # New cars always sold by Dealer
+        st.selectbox("Seller Type", ["Dealer"], disabled=True,
+                     help="New cars are always sold by Dealer")
+        seller_type = "Dealer"
+    else:
+        seller_type = st.selectbox("Seller Type",
+                                   ["Dealer", "Individual", "Trustmark Dealer"])
+
 with col2:
-    fuel_type   = st.selectbox("Fuel Type", ["Petrol", "Diesel", "CNG", "LPG", "Electric"])
+    fuel_type = st.selectbox("Fuel Type",
+                             ["Petrol", "Diesel", "CNG", "LPG", "Electric"])
+
 with col3:
     transmission = st.selectbox("Transmission", ["Manual", "Automatic"])
+
 st.markdown('</div>', unsafe_allow_html=True)
 
-# ── Predict ───────────────────────────────────────────────────────────────────
-if st.button("🔮 Predict Price"):
+# ── Predict Button ────────────────────────────────────────────────────────────
+btn_label = "🔮 Predict Showroom Price" if is_new_car else "🔮 Predict Market Price"
+
+if st.button(btn_label):
     try:
         input_values = []
 
-        # Numeric
+        # Numeric inputs
         input_values.append(int(vehicle_age))
         input_values.append(int(km_driven))
         input_values.append(float(mileage))
@@ -207,32 +239,45 @@ if st.button("🔮 Predict Price"):
         input_values.append(float(max_power))
         input_values.append(int(seats))
 
-        # Seller Type (3)
-        seller_enc = {"Dealer": [1,0,0], "Individual": [0,1,0], "Trustmark Dealer": [0,0,1]}
+        # Seller Type encoding (3 categories)
+        seller_enc = {
+            "Dealer":           [1, 0, 0],
+            "Individual":       [0, 1, 0],
+            "Trustmark Dealer": [0, 0, 1],
+        }
         input_values.extend(seller_enc[seller_type])
 
-        # Fuel Type (5)
-        fuel_enc = {"CNG": [1,0,0,0,0], "Diesel": [0,1,0,0,0], "Electric": [0,0,1,0,0],
-                    "LPG": [0,0,0,1,0], "Petrol": [0,0,0,0,1]}
+        # Fuel Type encoding (5 categories)
+        fuel_enc = {
+            "CNG":      [1, 0, 0, 0, 0],
+            "Diesel":   [0, 1, 0, 0, 0],
+            "Electric": [0, 0, 1, 0, 0],
+            "LPG":      [0, 0, 0, 1, 0],
+            "Petrol":   [0, 0, 0, 0, 1],
+        }
         input_values.extend(fuel_enc[fuel_type])
 
-        # Transmission (2)
-        trans_enc = {"Automatic": [1,0], "Manual": [0,1]}
+        # Transmission encoding (2 categories)
+        trans_enc = {"Automatic": [1, 0], "Manual": [0, 1]}
         input_values.extend(trans_enc[transmission])
 
         if len(input_values) != 16:
-            st.markdown(f'<div class="error-box">⚠️ Input size mismatch: expected 16, got {len(input_values)}</div>', unsafe_allow_html=True)
+            st.markdown(
+                f'<div class="error-box">⚠️ Input size mismatch: expected 16, got {len(input_values)}</div>',
+                unsafe_allow_html=True
+            )
         else:
-            import warnings
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                scaled = scaler.transform([input_values])
+                scaled     = scaler.transform([input_values])
                 prediction = model.predict(scaled)[0]
 
-            price_str = format_price(prediction)
+            price_str    = format_price(prediction)
+            result_label = "Estimated Showroom Price 🆕" if is_new_car else "Estimated Second-hand Market Price 🔄"
+
             st.markdown(f"""
             <div class="result-box">
-                <div class="result-label">Estimated Market Price</div>
+                <div class="result-label">{result_label}</div>
                 <div class="result-price">{price_str}</div>
             </div>
             """, unsafe_allow_html=True)
