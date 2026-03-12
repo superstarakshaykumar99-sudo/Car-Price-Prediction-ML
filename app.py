@@ -128,17 +128,11 @@ label, .stSelectbox label, .stNumberInput label {
 }
 
 .stNumberInput input, .stTextInput input {
-    background: rgba(255,255,255,0.07) !important;
-    border: 1px solid rgba(255,255,255,0.15) !important;
     border-radius: 10px !important;
-    color: white !important;
 }
 
 .stSelectbox > div > div {
-    background: rgba(255,255,255,0.07) !important;
-    border: 1px solid rgba(255,255,255,0.15) !important;
     border-radius: 10px !important;
-    color: white !important;
 }
 
 footer {visibility: hidden;}
@@ -186,7 +180,7 @@ with col2:
     mileage     = st.number_input("Mileage (kmpl)", min_value=0.0, max_value=100.0, value=18.0, step=0.5)
     max_power   = st.number_input("Max Power (bhp)", min_value=0.0, max_value=1000.0, value=85.0, step=1.0)
 
-seats = st.select_slider("Number of Seats", options=[2, 4, 5, 6, 7, 8, 9, 10], value=5)
+seats = st.select_slider("Number of Seats", options=[2, 4, 5, 6, 7], value=5)
 st.markdown('</div>', unsafe_allow_html=True)
 
 # ── Card 2: Car Type ─────────────────────────────────────────────────────────
