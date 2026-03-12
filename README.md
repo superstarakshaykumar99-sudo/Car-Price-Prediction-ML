@@ -7,10 +7,6 @@ The model is trained on a dataset of car features and uses multiple regression a
 
 Watch the application demo here:
 
-## 🎥 Live Demo
-
-Watch the application demo here:
-
 https://car-price-prediction-m-q3vmoto9r58fauqrqzdgdq.streamlit.app/
 
 ---
