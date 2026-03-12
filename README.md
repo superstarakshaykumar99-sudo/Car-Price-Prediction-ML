@@ -3,6 +3,16 @@
 This project predicts the price of used cars using Machine Learning algorithms.
 The model is trained on a dataset of car features and uses multiple regression algorithms to predict the estimated price.
 
+## 🎥 Live Demo
+
+Watch the application demo here:
+
+## 🎥 Live Demo
+
+Watch the application demo here:
+
+https://car-price-prediction-m-q3vmoto9r58fauqrqzdgdq.streamlit.app/
+
 ---
 
 ## 📌 Project Overview
