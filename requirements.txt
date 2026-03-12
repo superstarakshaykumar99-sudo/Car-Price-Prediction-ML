@@ -8,4 +8,4 @@ six
 pymysql
 ipykernel
 sqlalchemy
-
+streamlit
